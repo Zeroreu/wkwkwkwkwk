@@ -3,20 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Particle Interactive</title>
+    <title>My Code of Love</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; }
+        body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
         canvas { display: block; }
+        
+        /* Teks di tengah layar */
+        #text-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff0033;
+            text-align: center;
+            z-index: 10;
+            pointer-events: none; /* Biar gak ganggu klik animasi */
+            text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
+        }
+        h1 { font-size: 24px; font-weight: bold; margin: 0; letter-spacing: 2px; }
+        p { font-size: 14px; margin-top: 5px; opacity: 0.8; }
     </style>
 </head>
 <body>
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+
+    <div id="text-container">
+        <h1>For Farah</h1>
+        <p>But who will fall for my code of love?</p>
+    </div>
+
+    <canvas id="heartCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('heartCanvas');
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        let particles = [];
+        // Palet warna merah elegan yang berpijar
+        const colors = ['#ff0033', '#ff0000', '#cc0000', '#ff6666'];
+
+        // Rumus Matematika Bentuk Hati
+        function getHeartPosition(t) {
+            const x = 16 * Math.pow(Math.sin(t), 3);
+            const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+            return { x, y };
+        }
+
+        class Particle {
+            constructor() {
+                // Tentukan titik acak di garis bentuk hati
+                this.t = Math.random() * Math.PI * 2;
+                this.basePos = getHeartPosition(this.t);
+                
+                // Variasi ukuran sebaran partikel (biar terlihat berserabut/stringy)
+                this.spread = Math.random() * 12 + 6; 
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.size = Math.random() * 1.5 + 0.5;
+                
+                // Animasi bergetar
+                this.angle = Math.random() * Math.PI * 2;
+                this.speed = Math.random() * 0.1;
+                this.radiusX = Math.random() * 3;
+                this.radiusY = Math.random() * 3;
+            }
+
+            update(pulseScale) {
+                this.angle += this.speed;
+                // Getaran partikel di sekitar titik aslinya
+                const moveX = Math.cos(this.angle) * this.radiusX;
+                const moveY = Math.sin(this.angle) * this.radiusY;
+                
+                // Menghitung posisi akhir berdasarkan detak jantung (pulse)
+                const currentScale = this.spread * pulseScale;
+                this.x = (this.basePos.x * currentScale) + width / 2 + moveX;
+                this.y = (this.basePos.y * currentScale) + height / 2 + moveY;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
+
+        // Bikin 1000 partikel cahaya
+        for (let i = 0; i < 1000; i++) {
+            particles.push(new Particle());
+        }
+
+        let time = 0;
+        function animate() {
+            // Efek "Ekor" (Trail) yang bikin kelihatan kayak benang berserabut
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fillRect(0, 0, width, height);
+
+            time += 0.05;
+            
+            // Logika Detak Jantung Ganda (Double Beat)
+            // Menggabungkan dua gelombang sinus agar detaknya realistis (duk-duk... duk-duk...)
+            let pulse = 1 + Math.sin(time) * 0.08 + Math.max(0, Math.sin(time * 2.5)) * 0.06;
+
+            // Render semua partikel dengan efek cahaya (Glow)
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#ff0000';
+            
+            particles.forEach(p => {
+                p.update(pulse);
+                p.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        animate();
     </script>
-    <script type="module" src="main.js"></script>
 </body>
 </html>
